@@ -29,7 +29,7 @@ const About: React.FC = () => {
           >
             <div className="overflow-hidden rounded-2xl shadow-lg aspect-square bg-secondary max-w-md w-full">
               <img 
-                src="src/img/about.jpg" 
+                src="/img/about.jpg" 
                 alt="Matías Grigolo" 
                 className="object-cover w-full h-full"
               />
