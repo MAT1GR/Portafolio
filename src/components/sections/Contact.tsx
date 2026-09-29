@@ -29,7 +29,7 @@ const Contact: React.FC = () => {
           <div className="pointer-events-none absolute inset-0 opacity-[0.12] [background-image:radial-gradient(currentColor_1px,transparent_1px)] [background-size:22px_22px]" />
 
           <div className="relative">
-            <p className="font-mono text-xs uppercase tracking-[0.2em] opacity-70">05 — Contacto</p>
+            <p className="font-mono text-xs uppercase tracking-[0.2em] opacity-70">06 — Contacto</p>
             <h2 className="mx-auto mt-5 max-w-2xl text-4xl font-extrabold tracking-tight md:text-6xl">
               Construyamos algo juntos.
             </h2>
