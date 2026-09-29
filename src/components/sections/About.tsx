@@ -1,81 +1,95 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Code, Brain, Laptop } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { animate, motion, useInView } from 'framer-motion';
+import { Sparkles } from 'lucide-react';
+import { about, currently, services, stats } from '../../data/profile';
+import SectionHeading from '../ui/SectionHeading';
+import SpotlightCard from '../ui/SpotlightCard';
+
+const CountUp: React.FC<{ to: number }> = ({ to }) => {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true });
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    const controls = animate(0, to, { duration: 1.4, ease: 'easeOut', onUpdate: (v) => setValue(Math.round(v)) });
+    return () => controls.stop();
+  }, [inView, to]);
+
+  return <span ref={ref}>{value}</span>;
+};
 
 const About: React.FC = () => {
   return (
-    <section id="about" className="bg-muted section-padding">
-      <div className="container max-w-6xl">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-6">
-            Sobre mí
-          </h2>
-          <div className="w-24 h-1 mx-auto bg-gradient-to-r from-primary to-transparent rounded-full"></div>
-        </motion.div>
-        
-        <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
-          <motion.div 
-            className="flex justify-center"
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
+    <section id="about" className="section-padding">
+      <div className="container">
+        <SectionHeading
+          index="01"
+          label="Sobre mí"
+          title={
+            <>
+              Del problema al <span className="text-primary">producto funcionando</span>.
+            </>
+          }
+        />
+
+        <div className="grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.6 }}
           >
-            <div className="overflow-hidden rounded-2xl shadow-lg aspect-square bg-secondary max-w-md w-full">
-              <img 
-                src="/img/about.jpg" 
-                alt="Matías Grigolo" 
-                className="object-cover w-full h-full"
+            <div className="flex items-center gap-5">
+              <img
+                src="/img/about.jpg"
+                alt="Matías Grigolo"
+                className="h-20 w-20 rounded-2xl object-cover ring-2 ring-primary/40 ring-offset-4 ring-offset-background"
+                loading="lazy"
               />
+              <p className="inline-flex items-start gap-2 text-sm text-muted-foreground">
+                <Sparkles size={16} className="mt-0.5 shrink-0 text-primary" />
+                {currently}
+              </p>
+            </div>
+
+            <p className="mt-8 text-xl leading-relaxed">{about}</p>
+
+            <div className="mt-10 grid grid-cols-3 gap-4 border-t border-border pt-8">
+              {stats.map((stat) => (
+                <div key={stat.label}>
+                  <p className="text-4xl font-bold text-primary md:text-5xl">
+                    <CountUp to={stat.value} />
+                    {stat.suffix}
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground sm:text-sm">{stat.label}</p>
+                </div>
+              ))}
             </div>
           </motion.div>
-          
-          <motion.div 
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <p className="mb-6 text-lg">
-              Soy un desarrollador web y técnico en informática con experiencia en soluciones digitales. 
-              Me formé académicamente en Casa Salesiana San José, donde adquirí una sólida base técnica.
-            </p>
-            
-            <p className="mb-6 text-lg">
-              Actualmente trabajo en Laboratorio Consultar, donde aplico mis conocimientos técnicos para mejorar
-              procesos y desarrollar soluciones innovadoras.
-            </p>
-            
-            <p className="mb-8 text-lg">
-              Me apasiona la tecnología y estoy constantemente aprendiendo para mantenerme actualizado con las últimas tendencias 
-              y herramientas del desarrollo.
-            </p>
-            
-            <h3 className="mb-6 text-2xl font-semibold text-primary">Áreas de interés</h3>
-            
-            <div className="flex flex-wrap gap-4">
-              <div className="flex items-center px-4 py-3 rounded-xl bg-background/50 backdrop-blur-sm border border-border/50 transition-all duration-300 hover:border-primary/20 hover:shadow-lg group">
-                <Code className="shrink-0 mr-3 text-primary transition-transform duration-300 group-hover:scale-110" size={24} />
-                <span className="font-medium whitespace-nowrap">Desarrollo</span>
-              </div>
-              
-              <div className="flex items-center px-4 py-3 rounded-xl bg-background/50 backdrop-blur-sm border border-border/50 transition-all duration-300 hover:border-primary/20 hover:shadow-lg group">
-                <Laptop className="shrink-0 mr-3 text-primary transition-transform duration-300 group-hover:scale-110" size={24} />
-                <span className="font-medium whitespace-nowrap">Infraestructura</span>
-              </div>
-              
-              <div className="flex items-center px-4 py-3 rounded-xl bg-background/50 backdrop-blur-sm border border-border/50 transition-all duration-300 hover:border-primary/20 hover:shadow-lg group">
-                <Brain className="shrink-0 mr-3 text-primary transition-transform duration-300 group-hover:scale-110" size={24} />
-                <span className="font-medium whitespace-nowrap">IA</span>
-              </div>
-            </div>
-          </motion.div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {services.map((service, i) => {
+              const Icon = service.icon;
+              return (
+                <motion.div
+                  key={service.title}
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: i * 0.08 }}
+                >
+                  <SpotlightCard className="h-full p-6">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
+                      <Icon size={20} />
+                    </div>
+                    <h3 className="mt-5 font-semibold">{service.title}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{service.description}</p>
+                  </SpotlightCard>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>

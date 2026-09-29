@@ -1,65 +1,109 @@
-export interface Project {
-  id: number;
+import type { LucideIcon } from 'lucide-react';
+import { CalendarCheck, FlaskConical, Flower2, Glasses, Receipt, Wallet } from 'lucide-react';
+
+export type ProjectContext = 'Profesional' | 'Cliente' | 'Personal';
+
+export interface FeaturedProject {
+  slug: string;
   title: string;
+  kind: string;
+  context: ProjectContext;
   description: string;
-  image: string;
-  tags: string[];
-  demoUrl?: string;
+  highlights: string[];
+  stack: string[];
+  icon: LucideIcon;
   repoUrl?: string;
 }
 
-export const projects: Project[] = [
+export interface OtherProject {
+  title: string;
+  description: string;
+  stack: string[];
+  url: string;
+}
+
+export const featuredProjects: FeaturedProject[] = [
   {
-    id: 1,
-    title: "ArgenLeaf",
-    description: "Versión DIY de paneles de luz inteligentes similar a Nanoleaf, utilizando Arduino como plataforma principal. Desarrollado en equipo, permite crear paneles modulares con efectos de iluminación personalizables.",
-    image: "/img/argenleaf.png",
-    tags: ["Arduino", "Hardware", "C++"],
-    repoUrl: "https://github.com/MAT1GR/ARGENLEAF"
+    slug: 'isometer-go',
+    title: 'ISOmeter Go',
+    kind: 'Gestión de laboratorio',
+    context: 'Profesional',
+    description: 'El sistema con el que opera Laboratorio Consultar, en web y escritorio.',
+    highlights: [
+      'Roles y permisos por área',
+      'Órdenes de trabajo y seguimiento',
+      'Dashboard y PDFs automáticos',
+      'Notificaciones en tiempo real',
+    ],
+    stack: ['React', 'TypeScript', 'Node.js', 'SQLite', 'Tauri'],
+    icon: FlaskConical,
   },
   {
-    id: 2,
-    title: "ConsultarVault",
-    description: "Aplicación web para crear y almacenar contraseñas de forma segura y confiable. Interfaz intuitiva que facilita la gestión de credenciales.",
-    image: "/img/consultarvault.png",
-    tags: ["JavaScript", "React", "SQL"],
-    demoUrl: "https://mat1gr.github.io/ConsultarVault/",
-    repoUrl: "https://github.com/MAT1GR/ConsultarVault"
+    slug: 'lucen',
+    title: 'LUCEN',
+    kind: 'E-commerce',
+    context: 'Cliente',
+    description: 'Tienda online con pagos, panel admin y recuperación de carritos.',
+    highlights: [
+      'Checkout con Mercado Pago',
+      'Panel de pedidos, productos y clientes',
+      'Emails automáticos',
+      'Meta Conversions API',
+    ],
+    stack: ['React', 'TypeScript', 'Express', 'Prisma', 'Mercado Pago'],
+    icon: Glasses,
   },
   {
-    id: 3,
-    title: "Transformador de Archivos",
-    description: "Script especializado que combina y organiza texto de múltiples formatos de archivo en un único documento, diseñado específicamente para aplicaciones de Machine Learning.",
-    image: "/img/datos.png",
-    tags: ["Python", "Automatización"],
-    repoUrl: "https://github.com/MAT1GR/Transformador_de_archivos"
+    slug: 'viveroflor',
+    title: 'ViveroFlor',
+    kind: 'E-commerce',
+    context: 'Cliente',
+    description: 'E-commerce mobile-first para un vivero: catálogo, carrito y gestión de pedidos.',
+    highlights: ['Catálogo con filtros y stock', 'Retiro o envío', 'Panel de productos y pedidos'],
+    stack: ['TanStack Start', 'React', 'TypeScript', 'Vercel'],
+    icon: Flower2,
   },
   {
-    id: 4,
-    title: "Extracción de Datos",
-    description: "Script en Python que automatiza la extracción y organización de datos clave, optimizando el procesamiento de información para análisis posteriores.",
-    image: "/img/extraccion.png",
-    tags: ["Python", "Automatización"],
-    repoUrl: "https://github.com/MAT1GR/extraccion_datos_py"
+    slug: 'indoorkart',
+    title: 'Rosario Indoor Kart',
+    kind: 'Reservas online',
+    context: 'Cliente',
+    description: 'Reservas de karting con panel para el staff.',
+    highlights: ['Bloqueo temporal anti-sobreventa', 'Horarios, karts y precios', 'Roles Admin / Staff'],
+    stack: ['React', 'TypeScript', 'Express', 'Prisma'],
+    icon: CalendarCheck,
   },
   {
-    id: 5,
-    title: "Juego Ahorcado",
-    description: "Juego de ahorcado en Python con menú, colores y registro de partidas, ideal para practicar lógica y estructuras básicas.",
-    image: "/img/ahorcado.png",
-    tags: ["Python"],
-    repoUrl: "https://github.com/MAT1GR/Juego-Ahorcado"
+    slug: 'rospack',
+    title: 'Rospack',
+    kind: 'Gestión comercial',
+    context: 'Cliente',
+    description: 'Clientes, trabajos, presupuestos, cheques y cuentas corrientes.',
+    highlights: ['API REST validada', 'Reportes con gráficos', 'Exporta PDF y Excel'],
+    stack: ['React', 'TypeScript', 'Express', 'SQLite'],
+    icon: Receipt,
+    repoUrl: 'https://github.com/MAT1GR/rospack',
   },
-   {
-    id: 6,
-    title: "Notas",
-    description: "Una app de notas simple y rápida que permite crear, editar y eliminar notas, con guardado en la nube y sincronización por usuario usando React y Firebase.",
-    image: "/img/notas.png",
-    tags: ["React","SQL","JavaScript"],
-    repoUrl: "https://github.com/MAT1GR/App-Notas"
-  }
+  {
+    slug: 'billie',
+    title: 'Billie',
+    kind: 'App de finanzas',
+    context: 'Personal',
+    description: 'Finanzas personales y en pareja, en el celular.',
+    highlights: ['Presupuestos, deudas y metas', 'Login biométrico', 'Gráficos y export CSV'],
+    stack: ['Flutter', 'Supabase', 'React'],
+    icon: Wallet,
+    repoUrl: 'https://github.com/MAT1GR/BillieCel',
+  },
 ];
 
-export const allTags = Array.from(
-  new Set(projects.flatMap(project => project.tags))
-).sort();
+export const otherProjects: OtherProject[] = [
+  { title: 'ArgenLeaf', description: 'Paneles de luz inteligentes', stack: ['C++', 'Arduino'], url: 'https://github.com/MAT1GR/ARGENLEAF' },
+  { title: 'Washify', description: 'Reservas de lavaderos', stack: ['Flutter', 'Supabase'], url: 'https://github.com/MAT1GR/washify' },
+  { title: 'App de Notas', description: 'Editor con sync en la nube', stack: ['React', 'Firebase'], url: 'https://github.com/MAT1GR/App-Notas' },
+  { title: 'Transformador de Archivos', description: 'Datasets para ML', stack: ['Python'], url: 'https://github.com/MAT1GR/Transformador_de_archivos' },
+  { title: 'Extracción de Datos', description: 'Automatización de datos', stack: ['Python'], url: 'https://github.com/MAT1GR/extraccion_datos_py' },
+  { title: 'Preparador de Fotos', description: 'HEIC a WebP optimizado', stack: ['Python'], url: 'https://github.com/MAT1GR/PreparadorFotosWeb' },
+  { title: 'ConsultarVault', description: 'Gestor de contraseñas', stack: ['JavaScript'], url: 'https://github.com/MAT1GR/ConsultarVault' },
+  { title: 'Geometry Dash', description: 'Juego de plataformas', stack: ['Godot'], url: 'https://github.com/MAT1GR/GeometryDash' },
+];

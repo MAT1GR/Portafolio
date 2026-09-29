@@ -2,50 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
+/* El color principal se define en --primary. Cambialo acá para cambiar toda la paleta. */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 0 0% 99%;
+    --foreground: 240 10% 4%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 240 10% 4%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --popover-foreground: 240 10% 4%;
+    --primary: 88 72% 38%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 5% 95%;
+    --secondary-foreground: 240 6% 10%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 40%;
+    --accent: 88 72% 38%;
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 1rem;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 6% 89%;
+    --input: 240 6% 89%;
+    --ring: 88 72% 38%;
+    --radius: 0.875rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --background: 240 10% 3.5%;
+    --foreground: 0 0% 97%;
+    --card: 240 7% 6.5%;
+    --card-foreground: 0 0% 97%;
+    --popover: 240 10% 4%;
+    --popover-foreground: 0 0% 97%;
+    --primary: 82 96% 58%;
+    --primary-foreground: 240 10% 4%;
+    --secondary: 240 5% 11%;
+    --secondary-foreground: 0 0% 96%;
+    --muted: 240 5% 10%;
+    --muted-foreground: 240 5% 62%;
+    --accent: 82 96% 58%;
+    --accent-foreground: 240 10% 4%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 4% 15%;
+    --input: 240 4% 15%;
+    --ring: 82 96% 58%;
   }
 }
 
@@ -54,37 +55,75 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground font-sans;
-    font-family: 'Inter', sans-serif;
+    @apply bg-background text-foreground font-sans antialiased;
   }
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 5rem;
   }
+  ::selection {
+    @apply bg-primary text-primary-foreground;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
 }
 
 @layer components {
   .container {
-    @apply px-4 mx-auto max-w-7xl sm:px-6 lg:px-8;
-  }
-  
-  .section-title {
-    @apply text-3xl font-bold mb-12 text-center text-foreground md:text-4xl;
-  }
-  
-  .button {
-    @apply inline-flex items-center justify-center px-6 py-3 text-base font-medium rounded-xl shadow-sm transition-all duration-300 hover:scale-105;
-  }
-  
-  .button-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+    @apply px-4 mx-auto max-w-6xl sm:px-6 lg:px-8;
   }
 
   .section-padding {
     @apply py-24 md:py-32;
   }
 
-  .input-field {
-    @apply w-full p-4 border rounded-xl bg-background border-input focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all duration-300;
+  .button {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-full transition-all duration-200 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  .button-primary {
+    @apply bg-primary text-primary-foreground shadow-[0_0_0_0_hsl(var(--primary)/0)] hover:shadow-[0_0_32px_-4px_hsl(var(--primary)/0.6)] hover:-translate-y-0.5;
+  }
+
+  .button-ghost {
+    @apply border border-border bg-card/60 text-foreground backdrop-blur hover:border-primary/60 hover:text-primary;
+  }
+
+  .chip {
+    @apply inline-flex items-center px-2.5 py-1 text-xs font-mono rounded-md border border-border bg-secondary/70 text-secondary-foreground transition-colors;
+  }
+
+  .surface {
+    @apply rounded-2xl border border-border bg-card;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent;
+  }
+
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, hsl(var(--border) / 0.7) 1px, transparent 1px),
+      linear-gradient(to bottom, hsl(var(--border) / 0.7) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black 20%, transparent 75%);
+  }
+
+  /* Tarjeta con halo que sigue al mouse (ver SpotlightCard) */
+  .spotlight {
+    background-image: radial-gradient(
+      420px circle at var(--x, 50%) var(--y, 50%),
+      hsl(var(--primary) / 0.12),
+      transparent 60%
+    );
   }
 }

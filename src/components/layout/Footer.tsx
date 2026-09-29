@@ -1,46 +1,27 @@
 import React from 'react';
 import { Github, Linkedin, Mail } from 'lucide-react';
+import { profile } from '../../data/profile';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
-  
+
   return (
-    <footer className="bg-muted py-8">
-      <div className="container">
-        <div className="flex flex-col items-center justify-between space-y-4 md:flex-row md:space-y-0">
-          <div>
-            <p className="text-center md:text-left text-muted-foreground">
-              &copy; {currentYear} Matías Grigolo. Todos los derechos reservados.
-            </p>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <a 
-              href="https://github.com/MAT1GR" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
-              aria-label="GitHub"
-            >
-              <Github size={20} />
-            </a>
-            <a 
-              href="https://www.linkedin.com/in/matiasgrigolo/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
-              aria-label="LinkedIn"
-            >
-              <Linkedin size={20} />
-            </a>
-            <a 
-              href="mailto:grigomati@gmail.com" 
-              className="text-muted-foreground hover:text-primary transition-colors"
-              aria-label="Email"
-            >
-              <Mail size={20} />
-            </a>
-          </div>
+    <footer className="border-t border-border py-8">
+      <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
+        <p className="text-sm text-muted-foreground">
+          &copy; {currentYear} {profile.name} · {profile.location}
+        </p>
+
+        <div className="flex items-center gap-4">
+          <a href={profile.github} target="_blank" rel="noopener noreferrer" className="text-muted-foreground transition-colors hover:text-primary" aria-label="GitHub">
+            <Github size={18} />
+          </a>
+          <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="text-muted-foreground transition-colors hover:text-primary" aria-label="LinkedIn">
+            <Linkedin size={18} />
+          </a>
+          <a href={`mailto:${profile.email}`} className="text-muted-foreground transition-colors hover:text-primary" aria-label="Email">
+            <Mail size={18} />
+          </a>
         </div>
       </div>
     </footer>

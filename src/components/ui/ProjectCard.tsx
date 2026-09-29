@@ -1,77 +1,86 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { ExternalLink, Github } from 'lucide-react';
-import { Project } from '../../data/projects';
+import React, { useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Github, Plus } from 'lucide-react';
+import { FeaturedProject } from '../../data/projects';
+import SpotlightCard from './SpotlightCard';
 
 interface ProjectCardProps {
-  project: Project;
+  project: FeaturedProject;
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
+  const [open, setOpen] = useState(false);
+  const Icon = project.icon;
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className="overflow-hidden transition-all rounded-xl shadow-lg bg-card hover:shadow-xl hover:scale-[1.02] duration-300 flex flex-col h-full"
-    >
-      <div className="relative overflow-hidden aspect-video">
-        <img 
-          src={project.image} 
-          alt={project.title} 
-          className="object-cover w-full h-full transition-transform duration-300 hover:scale-105"
-        />
-      </div>
-      
-      <div className="flex flex-col flex-grow p-8">
-        <div className="flex-grow">
-          <h3 className="mb-3 text-2xl font-semibold">{project.title}</h3>
-          <p className="text-muted-foreground">
-            {project.description}
-          </p>
+    <SpotlightCard className="flex h-full flex-col">
+      <div className="flex h-full flex-col p-6 md:p-7">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all duration-300 group-hover:rotate-[-6deg] group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground">
+            <Icon size={22} />
+          </div>
+          <span className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+            {project.context}
+          </span>
         </div>
 
-        <div className="mt-8">
-          <div className="flex flex-wrap gap-2 mb-6">
-            {project.tags.map((tag) => (
-              <span 
-                key={tag} 
-                className="px-3 py-1 text-sm font-medium rounded-full bg-primary/10 text-primary"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-          
-          <div className="flex space-x-4">
-            {project.demoUrl && (
-              <a 
-                href={project.demoUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center px-4 py-2 text-sm font-medium transition-colors rounded-lg bg-primary/10 text-primary hover:bg-primary/20"
-              >
-                <ExternalLink size={16} className="mr-2" />
-                Demo
-              </a>
-            )}
-            
-            {project.repoUrl && (
-              <a 
-                href={project.repoUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center px-4 py-2 text-sm font-medium transition-colors rounded-lg bg-primary/10 text-primary hover:bg-primary/20"
-              >
-                <Github size={16} className="mr-2" />
-                Código
-              </a>
-            )}
-          </div>
+        <p className="mt-6 font-mono text-xs text-primary">{project.kind}</p>
+        <h3 className="mt-1 text-2xl font-bold tracking-tight">{project.title}</h3>
+        <p className="mt-2 text-muted-foreground">{project.description}</p>
+
+        <AnimatePresence initial={false}>
+          {open && (
+            <motion.ul
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="overflow-hidden"
+            >
+              <div className="mt-4 space-y-2 border-l-2 border-primary pl-4">
+                {project.highlights.map((item) => (
+                  <li key={item} className="text-sm">
+                    {item}
+                  </li>
+                ))}
+              </div>
+            </motion.ul>
+          )}
+        </AnimatePresence>
+
+        <div className="mt-5 flex flex-wrap gap-1.5">
+          {project.stack.map((tech) => (
+            <span key={tech} className="chip">
+              {tech}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-auto flex items-center justify-between gap-3 pt-6">
+          <button
+            onClick={() => setOpen((o) => !o)}
+            aria-expanded={open}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+          >
+            <motion.span animate={{ rotate: open ? 45 : 0 }} className="inline-flex">
+              <Plus size={16} />
+            </motion.span>
+            {open ? 'Menos' : 'Qué incluye'}
+          </button>
+
+          {project.repoUrl && (
+            <a
+              href={project.repoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+            >
+              <Github size={16} /> Código
+            </a>
+          )}
         </div>
       </div>
-    </motion.div>
+    </SpotlightCard>
   );
 };
 

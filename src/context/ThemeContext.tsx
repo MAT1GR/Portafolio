@@ -10,32 +10,21 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    // Check if theme is stored in localStorage
-    if (typeof window !== 'undefined') {
-      const savedTheme = window.localStorage.getItem('theme') as Theme;
-      
-      // Check if user has a system preference
-      if (!savedTheme) {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        return prefersDark ? 'dark' : 'light';
-      }
-      
-      return savedTheme;
-    }
-    
-    return 'light';
-  });
+  // Dark by default; the inline script in index.html applies the same rule before first paint.
+  const [theme, setTheme] = useState<Theme>(() =>
+    document.documentElement.classList.contains('dark') ? 'dark' : 'light'
+  );
 
   useEffect(() => {
     const root = window.document.documentElement;
-    
-    // Remove the previous theme class and add the new one
     root.classList.remove('light', 'dark');
     root.classList.add(theme);
-    
-    // Save theme to localStorage
-    localStorage.setItem('theme', theme);
+
+    try {
+      localStorage.setItem('theme', theme);
+    } catch {
+      // Storage unavailable (private mode); theme just won't persist.
+    }
   }, [theme]);
 
   const toggleTheme = () => {
