@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ink: #17142a;
+  --color-ink-2: #2a2640;
+  --color-paper: #fbf8f3;
+  --color-card: #ffffff;
+  --color-line: #ece7df;
+  --color-line-2: #ddd6cb;
+  --color-muted: #6b6578;
+  --color-brand: #ff5b2e;
+  --color-brand-dark: #e5481d;
+  --color-brand-soft: #fff1ea;
+  --color-mint: #0e9f8f;
+  --color-mint-soft: #e5f6f3;
+  --color-ok: #12a150;
+  --color-ok-soft: #e8f7ee;
+  --color-warn: #b7790a;
+  --color-warn-soft: #fdf4e1;
+  --color-bad: #d93b3b;
+  --color-bad-soft: #fdecec;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Bricolage Grotesque Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --radius-xl: 14px;
+  --radius-2xl: 18px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition select-none disabled:cursor-not-allowed disabled:opacity-55;
+  }
+  .btn-primary {
+    @apply bg-ink text-white hover:bg-ink-2;
+  }
+  .btn-brand {
+    @apply bg-brand text-white hover:bg-brand-dark;
+  }
+  .btn-secondary {
+    @apply border border-line-2 bg-white text-ink hover:border-ink/40;
+  }
+  .btn-ghost {
+    @apply text-ink hover:bg-black/5;
+  }
+  .btn-danger {
+    @apply border border-bad/30 bg-white text-bad hover:bg-bad-soft;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+  .input {
+    @apply w-full rounded-xl border border-line-2 bg-white px-3 py-2.5 text-sm text-ink outline-none transition placeholder:text-muted/70 focus:border-ink focus:ring-2 focus:ring-ink/10 disabled:bg-paper;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-ink;
+  }
+  .hint {
+    @apply mt-1 text-xs text-muted;
+  }
+  .card {
+    @apply rounded-2xl border border-line bg-card;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold whitespace-nowrap;
+  }
+  .table-wrap {
+    @apply overflow-x-auto rounded-2xl border border-line bg-white;
+  }
+  .table {
+    @apply w-full text-left text-sm;
+  }
+  .table th {
+    @apply border-b border-line bg-paper/60 px-4 py-2.5 text-xs font-semibold tracking-wide text-muted uppercase;
+  }
+  .table td {
+    @apply border-b border-line px-4 py-3 align-middle;
+  }
+  .table tr:last-child td {
+    @apply border-b-0;
+  }
+  .link {
+    @apply font-medium text-ink underline decoration-line-2 underline-offset-4 hover:decoration-ink;
+  }
+}
+
+/* Contenido largo (textos legales, descripciones) */
+.prose-lite p {
+  margin: 0 0 0.9em;
+  line-height: 1.65;
+}
+.prose-lite h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 1.4em 0 0.5em;
+}
+.prose-lite ul {
+  list-style: disc;
+  padding-left: 1.2em;
+  margin: 0 0 1em;
+}
+.prose-lite li {
+  margin: 0.25em 0;
+}
+
+@keyframes vd-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.vd-pulse {
+  animation: vd-pulse 1.6s ease-in-out infinite;
+}

@@ -1,0 +1,1024 @@
+// Vendora — esquema de base de datos (PostgreSQL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────── Plataforma ─────────────────────────
+
+enum PlatformRole {
+  USER
+  SUPERADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+model User {
+  id                String       @id @default(cuid())
+  email             String       @unique
+  name              String
+  passwordHash      String
+  platformRole      PlatformRole @default(USER)
+  status            UserStatus   @default(ACTIVE)
+  planId            String
+  plan              Plan         @relation(fields: [planId], references: [id])
+  planStartedAt     DateTime     @default(now())
+  trialEndsAt       DateTime?
+  trialUsed         Boolean      @default(false)
+  nextBillingAt     DateTime?
+  notifyEmailOnSale Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  sessions          Session[]
+  passwordResets    PasswordReset[]
+  ownedStores       Store[]           @relation("StoreOwner")
+  memberships       StoreMember[]
+  pushSubscriptions PushSubscription[]
+  invoices          PlatformInvoice[]
+  commissions       CommissionEntry[]
+  aiJobs            AiJob[]
+  invitationsSent   StoreInvitation[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  userAgent String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PasswordReset {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Plan {
+  id                 String   @id @default(cuid())
+  key                String   @unique
+  name               String
+  description        String   @default("")
+  priceUsd           Decimal  @default(0) @db.Decimal(10, 2)
+  commissionBps      Int // 500 = 5 %
+  maxStores          Int
+  aiEbooksPerMonth   Int? // null = sin límite
+  maxBonusesPerStore Int
+  maxUpsellsPerStore Int
+  cartRecovery       Boolean  @default(false)
+  teamRoles          Boolean  @default(false)
+  trialDays          Int      @default(30)
+  sortOrder          Int      @default(0)
+  active             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  users              User[]
+}
+
+enum InvoiceStatus {
+  OPEN
+  PAID
+  OVERDUE
+  VOID
+}
+
+model PlatformInvoice {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  number         Int           @default(autoincrement())
+  periodStart    DateTime
+  periodEnd      DateTime
+  planKey        String
+  planAmountUsd  Decimal       @db.Decimal(10, 2)
+  commissionsUsd Decimal       @db.Decimal(12, 2)
+  totalUsd       Decimal       @db.Decimal(12, 2)
+  status         InvoiceStatus @default(OPEN)
+  dueAt          DateTime
+  paidAt         DateTime?
+  provider       String?
+  providerRef    String?
+  notes          String?
+  createdAt      DateTime      @default(now())
+  commissions    CommissionEntry[]
+
+  @@index([userId, status])
+}
+
+enum CommissionStatus {
+  PENDING
+  INVOICED
+  REVERSED
+}
+
+model CommissionEntry {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeId   String
+  orderId   String
+  paymentId String           @unique
+  provider  String
+  amount    Decimal          @db.Decimal(12, 2)
+  currency  String
+  amountUsd Decimal          @db.Decimal(12, 2)
+  rateBps   Int
+  status    CommissionStatus @default(PENDING)
+  invoiceId String?
+  invoice   PlatformInvoice? @relation(fields: [invoiceId], references: [id])
+  createdAt DateTime         @default(now())
+
+  @@index([userId, status])
+}
+
+model ExchangeRate {
+  currency  String   @id // unidades de la moneda por 1 USD
+  perUsd    Decimal  @db.Decimal(18, 6)
+  source    String   @default("manual")
+  updatedAt DateTime @updatedAt
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+enum AiJobKind {
+  STORE
+  EBOOK
+  SALES_PAGE
+  COVER
+}
+
+enum AiJobStatus {
+  QUEUED
+  RUNNING
+  DONE
+  FAILED
+}
+
+model AiJob {
+  id         String      @id @default(cuid())
+  userId     String
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeId    String?
+  productId  String?
+  kind       AiJobKind
+  status     AiJobStatus @default(QUEUED)
+  progress   Int         @default(0)
+  message    String?
+  input      Json
+  output     Json?
+  error      String?
+  countsQuota Boolean    @default(false)
+  createdAt  DateTime    @default(now())
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  @@index([userId, kind, createdAt])
+  @@index([status])
+}
+
+enum EmailStatus {
+  QUEUED
+  SENT
+  LOGGED
+  FAILED
+}
+
+model EmailMessage {
+  id        String      @id @default(cuid())
+  storeId   String?
+  to        String
+  subject   String
+  html      String
+  text      String?
+  kind      String
+  status    EmailStatus @default(QUEUED)
+  error     String?
+  createdAt DateTime    @default(now())
+  sentAt    DateTime?
+
+  @@index([createdAt])
+  @@index([to])
+}
+
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String
+  eventId     String
+  storeId     String?
+  payload     Json
+  processedAt DateTime?
+  error       String?
+  createdAt   DateTime  @default(now())
+
+  @@unique([provider, eventId])
+}
+
+// ───────────────────────── Tiendas ─────────────────────────
+
+enum StoreType {
+  STORE
+  CHECKOUT
+}
+
+enum StoreStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum LandingMode {
+  DEFAULT
+  CUSTOM_HTML
+}
+
+model Store {
+  id              String      @id @default(cuid())
+  ownerId         String
+  owner           User        @relation("StoreOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  name            String
+  slug            String      @unique
+  customDomain    String?     @unique
+  type            StoreType   @default(STORE)
+  status          StoreStatus @default(ACTIVE)
+  suspendedReason String?
+  language        String      @default("es")
+  timezone        String      @default("America/Argentina/Buenos_Aires")
+  baseCurrency    String      @default("USD")
+  testMode        Boolean     @default(false)
+
+  // Marca
+  logoUrl      String?
+  bannerUrl    String?
+  primaryColor String  @default("#FF5B2E")
+  accentColor  String  @default("#17142A")
+  headline     String?
+  description  String?
+
+  // SEO + IA
+  metaTitle       String?
+  metaDescription String?
+  noindex         Boolean @default(false)
+  aiContext       String?
+
+  // Contacto y legales
+  supportEmail     String?
+  supportWhatsapp  String?
+  legalName        String?
+  legalTaxId       String?
+  legalAddress     String?
+  guaranteeDays    Int     @default(7)
+  termsText        String?
+  privacyText      String?
+  refundText       String?
+
+  // Contenido
+  landingMode  LandingMode @default(DEFAULT)
+  landingHtml  String?
+  mainProductId String?
+
+  // Configuración en JSON (ver src/lib/store-settings.ts)
+  checkoutSettings Json @default("{}")
+  deliverySettings Json @default("{}")
+  thankYouSettings Json @default("{}")
+  recoverySettings Json @default("{}")
+  notifySettings   Json @default("{}")
+
+  // Tracking
+  metaPixelId      String?
+  metaCapiTokenEnc String?
+  metaTestEventCode String?
+  ga4Id            String?
+  tiktokPixelId    String?
+
+  orderSeq   Int      @default(1000)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  members      StoreMember[]
+  invitations  StoreInvitation[]
+  markets      Market[]
+  gateways     PaymentGateway[]
+  products     Product[]
+  orderBumps   OrderBump[]
+  funnels      Funnel[]
+  coupons      Coupon[]
+  media        MediaAsset[]
+  checkouts    Checkout[]
+  orders       Order[]
+  customers    Customer[]
+  events       AnalyticsEvent[]
+  checkoutTests CheckoutTest[]
+  buyerTokens  BuyerLoginToken[]
+}
+
+enum StoreRole {
+  OWNER
+  ADMIN
+  EDITOR
+  SUPPORT
+  ANALYST
+}
+
+model StoreMember {
+  id        String    @id @default(cuid())
+  storeId   String
+  store     Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      StoreRole
+  createdAt DateTime  @default(now())
+
+  @@unique([storeId, userId])
+}
+
+model StoreInvitation {
+  id          String    @id @default(cuid())
+  storeId     String
+  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  email       String
+  role        StoreRole
+  tokenHash   String    @unique
+  invitedById String
+  invitedBy   User      @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model Market {
+  id           String   @id @default(cuid())
+  storeId      String
+  store        Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name         String
+  currency     String
+  countries    String[]
+  isDefault    Boolean  @default(false)
+  rate         Decimal  @db.Decimal(18, 6) // unidades de la moneda del market por 1 unidad de la moneda base
+  rounding     String   @default("none") // none | integer | 99 | 90 | 10
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  prices       ProductMarketPrice[]
+
+  @@index([storeId])
+}
+
+enum GatewayProvider {
+  MERCADOPAGO
+  STRIPE
+  PAYPAL
+  WHOP
+  TRANSFER
+  TEST
+}
+
+model PaymentGateway {
+  id             String          @id @default(cuid())
+  storeId        String
+  store          Store           @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  provider       GatewayProvider
+  enabled        Boolean         @default(true)
+  displayName    String?
+  credentialsEnc String?
+  settings       Json            @default("{}")
+  sortOrder      Int             @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@unique([storeId, provider])
+}
+
+// ───────────────────────── Productos ─────────────────────────
+
+enum ProductType {
+  EBOOK
+  COURSE
+  TEMPLATE
+  AUDIO
+  VIDEO
+  SOFTWARE
+  PACK
+  LINK
+}
+
+enum ProductStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ProductVisibility {
+  PUBLIC
+  HIDDEN
+  POSTPURCHASE_ONLY
+}
+
+enum SalesPageMode {
+  BLOCKS
+  CUSTOM_HTML
+}
+
+model Product {
+  id               String            @id @default(cuid())
+  storeId          String
+  store            Store             @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name             String
+  slug             String
+  type             ProductType       @default(EBOOK)
+  status           ProductStatus     @default(DRAFT)
+  visibility       ProductVisibility @default(PUBLIC)
+  shortDescription String?
+  description      String?
+  imageUrl         String?
+  price            Decimal           @db.Decimal(12, 2)
+  compareAtPrice   Decimal?          @db.Decimal(12, 2)
+  checkoutTitle    String?
+  checkoutSubtitle String?
+  deliveryNotice   String?
+  salesPageMode    SalesPageMode     @default(BLOCKS)
+  salesPage        Json              @default("[]")
+  salesPageHtml    String?
+  aiGenerated      Boolean           @default(false)
+  sortOrder        Int               @default(0)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  files         ProductFile[]
+  modules       CourseModule[]
+  bonuses       ProductBonus[]       @relation("MainProduct")
+  bonusOf       ProductBonus[]       @relation("BonusProduct")
+  marketPrices  ProductMarketPrice[]
+  bumpsAsMain   OrderBump[]          @relation("BumpMain")
+  bumpsAsOffer  OrderBump[]          @relation("BumpOffer")
+  funnelNodes   FunnelNode[]
+  orderItems    OrderItem[]
+  grants        AccessGrant[]
+
+  @@unique([storeId, slug])
+  @@index([storeId, status])
+}
+
+model ProductMarketPrice {
+  id             String   @id @default(cuid())
+  productId      String
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  marketId       String
+  market         Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  price          Decimal  @db.Decimal(12, 2)
+  compareAtPrice Decimal? @db.Decimal(12, 2)
+
+  @@unique([productId, marketId])
+}
+
+enum FileKind {
+  FILE
+  LINK
+}
+
+model ProductFile {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  kind       FileKind @default(FILE)
+  name       String
+  storageKey String?
+  url        String?
+  size       Int?
+  mimeType   String?
+  sortOrder  Int      @default(0)
+  aiGenerated Boolean @default(false)
+  createdAt  DateTime @default(now())
+  downloads  Download[]
+}
+
+model CourseModule {
+  id        String         @id @default(cuid())
+  productId String
+  product   Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  title     String
+  sortOrder Int            @default(0)
+  lessons   CourseLesson[]
+}
+
+model CourseLesson {
+  id        String       @id @default(cuid())
+  moduleId  String
+  module    CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title     String
+  content   String?
+  videoUrl  String?
+  fileUrl   String?
+  sortOrder Int          @default(0)
+  progress  LessonProgress[]
+}
+
+model ProductBonus {
+  id             String  @id @default(cuid())
+  productId      String
+  product        Product @relation("MainProduct", fields: [productId], references: [id], onDelete: Cascade)
+  bonusProductId String
+  bonusProduct   Product @relation("BonusProduct", fields: [bonusProductId], references: [id], onDelete: Cascade)
+  sortOrder      Int     @default(0)
+
+  @@unique([productId, bonusProductId])
+}
+
+enum PricingMode {
+  FIXED
+  DISCOUNT
+}
+
+enum CompareAgainst {
+  STORE_PRICE
+  COMPARE_AT
+}
+
+model OrderBump {
+  id              String         @id @default(cuid())
+  storeId         String
+  store           Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  mainProductId   String
+  mainProduct     Product        @relation("BumpMain", fields: [mainProductId], references: [id], onDelete: Cascade)
+  offerProductId  String
+  offerProduct    Product        @relation("BumpOffer", fields: [offerProductId], references: [id], onDelete: Cascade)
+  pricingMode     PricingMode    @default(DISCOUNT)
+  discountPercent Int            @default(0)
+  compareAgainst  CompareAgainst @default(STORE_PRICE)
+  fixedPrice      Decimal?       @db.Decimal(12, 2)
+  headline        String
+  description     String?
+  buttonText      String
+  imageUrl        String?
+  timerEnabled    Boolean        @default(false)
+  timerMinutes    Int            @default(10)
+  active          Boolean        @default(true)
+  sortOrder       Int            @default(0)
+  createdAt       DateTime       @default(now())
+}
+
+// ───────────────────────── Embudos post-compra ─────────────────────────
+
+enum FunnelStatus {
+  ACTIVE
+  PAUSED
+}
+
+enum FunnelTrigger {
+  ALWAYS
+  PRODUCTS
+}
+
+enum TimerExpireAction {
+  NEXT_OFFER
+  THANK_YOU
+}
+
+model Funnel {
+  id                 String            @id @default(cuid())
+  storeId            String
+  store              Store             @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name               String
+  status             FunnelStatus      @default(PAUSED)
+  trigger            FunnelTrigger     @default(ALWAYS)
+  triggerProductIds  String[]
+  priority           Int               @default(0)
+  reservationMinutes Int               @default(10)
+  onTimerExpire      TimerExpireAction @default(NEXT_OFFER)
+  entryNodeId        String?
+  thankYouOverride   Json?
+  statsResetAt       DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  nodes              FunnelNode[]
+}
+
+enum OfferType {
+  UPSELL
+  DOWNSELL
+}
+
+enum ContentMode {
+  TEMPLATE
+  CUSTOM_HTML
+}
+
+model FunnelNode {
+  id              String         @id @default(cuid())
+  funnelId        String
+  funnel          Funnel         @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  type            OfferType      @default(UPSELL)
+  label           String
+  productId       String
+  product         Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  pricingMode     PricingMode    @default(DISCOUNT)
+  discountPercent Int            @default(0)
+  compareAgainst  CompareAgainst @default(STORE_PRICE)
+  fixedPrice      Decimal?       @db.Decimal(12, 2)
+  contentMode     ContentMode    @default(TEMPLATE)
+  title           String
+  subtitle        String?
+  body            String?
+  imageUrl        String?
+  videoUrl        String?
+  acceptText      String
+  declineText     String
+  timerText       String?
+  customHtml      String?
+  acceptNextId    String?
+  declineNextId   String?
+  abTestActive    Boolean        @default(false)
+  abStartedAt     DateTime?
+  createdAt       DateTime       @default(now())
+  variants        FunnelNodeVariant[]
+  impressions     OfferImpression[]
+}
+
+model FunnelNodeVariant {
+  id              String     @id @default(cuid())
+  nodeId          String
+  node            FunnelNode @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  key             String // A | B
+  discountPercent Int?
+  fixedPrice      Decimal?   @db.Decimal(12, 2)
+  title           String?
+  body            String?
+  acceptText      String?
+  customHtml      String?
+
+  @@unique([nodeId, key])
+}
+
+enum OfferResult {
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  FAILED
+}
+
+model OfferImpression {
+  id         String       @id @default(cuid())
+  orderId    String
+  order      Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  nodeId     String
+  node       FunnelNode   @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+  variantKey String?
+  price      Decimal      @db.Decimal(12, 2)
+  currency   String
+  result     OfferResult?
+  revenue    Decimal      @default(0) @db.Decimal(12, 2)
+  shownAt    DateTime     @default(now())
+  expiresAt  DateTime
+  decidedAt  DateTime?
+
+  @@unique([orderId, nodeId])
+  @@index([nodeId, shownAt])
+}
+
+// ───────────────────────── Checkout A/B ─────────────────────────
+
+model CheckoutTest {
+  id         String    @id @default(cuid())
+  storeId    String
+  store      Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  productId  String
+  name       String
+  active     Boolean   @default(true)
+  variantA   Json
+  variantB   Json
+  startedAt  DateTime  @default(now())
+  endedAt    DateTime?
+  winner     String?
+  createdAt  DateTime  @default(now())
+}
+
+// ───────────────────────── Cupones y medios ─────────────────────────
+
+enum CouponType {
+  PERCENT
+  FIXED
+}
+
+model Coupon {
+  id         String     @id @default(cuid())
+  storeId    String
+  store      Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  code       String
+  type       CouponType @default(PERCENT)
+  value      Decimal    @db.Decimal(12, 2)
+  productIds String[]
+  startsAt   DateTime?
+  endsAt     DateTime?
+  maxUses    Int?
+  usedCount  Int        @default(0)
+  active     Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+
+  @@unique([storeId, code])
+}
+
+model MediaAsset {
+  id         String   @id @default(cuid())
+  storeId    String
+  store      Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name       String
+  storageKey String
+  url        String
+  mimeType   String
+  size       Int
+  createdAt  DateTime @default(now())
+}
+
+// ───────────────────────── Checkout, pedidos y entrega ─────────────────────────
+
+enum CheckoutStatus {
+  OPEN
+  ABANDONED
+  RECOVERED
+  COMPLETED
+}
+
+model Checkout {
+  id               String         @id @default(cuid())
+  storeId          String
+  store            Store          @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  productId        String
+  marketId         String?
+  currency         String
+  email            String?
+  name             String?
+  phone            String?
+  country          String?
+  bumpIds          String[]
+  couponCode       String?
+  total            Decimal        @default(0) @db.Decimal(12, 2)
+  visitorId        String?
+  utm              Json           @default("{}")
+  abTestId         String?
+  abVariant        String?
+  status           CheckoutStatus @default(OPEN)
+  recoveryStep     Int            @default(0)
+  lastRecoveryAt   DateTime?
+  recoveredAt      DateTime?
+  orderId          String?
+  emailCapturedAt  DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([storeId, status, emailCapturedAt])
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  email     String
+  name      String?
+  phone     String?
+  country   String?
+  createdAt DateTime @default(now())
+  orders    Order[]
+  grants    AccessGrant[]
+  progress  LessonProgress[]
+
+  @@unique([storeId, email])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  PARTIALLY_REFUNDED
+  REFUNDED
+  FAILED
+  CANCELLED
+}
+
+model Order {
+  id               String      @id @default(cuid())
+  number           Int
+  storeId          String
+  store            Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customerId       String
+  customer         Customer    @relation(fields: [customerId], references: [id])
+  checkoutId       String?
+  email            String
+  name             String?
+  phone            String?
+  country          String?
+  marketId         String?
+  currency         String
+  subtotal         Decimal     @db.Decimal(12, 2)
+  discountTotal    Decimal     @default(0) @db.Decimal(12, 2)
+  total            Decimal     @db.Decimal(12, 2)
+  paidTotal        Decimal     @default(0) @db.Decimal(12, 2)
+  couponCode       String?
+  status           OrderStatus @default(PENDING)
+  provider         GatewayProvider
+  paidAt           DateTime?
+  utm              Json        @default("{}")
+  visitorId        String?
+  fbp              String?
+  fbc              String?
+  clientIp         String?
+  userAgent        String?
+  abTestId         String?
+  abVariant        String?
+  funnelId         String?
+  currentNodeId    String?
+  funnelDone       Boolean     @default(false)
+  accessKey        String      @unique
+  transferProofUrl String?
+  testMode         Boolean     @default(false)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  items       OrderItem[]
+  payments    Payment[]
+  impressions OfferImpression[]
+  grants      AccessGrant[]
+
+  @@unique([storeId, number])
+  @@index([storeId, status, createdAt])
+}
+
+enum ItemKind {
+  MAIN
+  BUMP
+  BONUS
+  UPSELL
+  DOWNSELL
+}
+
+enum ItemStatus {
+  PENDING
+  PAID
+  REFUNDED
+  FAILED
+}
+
+model OrderItem {
+  id        String     @id @default(cuid())
+  orderId   String
+  order     Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product    @relation(fields: [productId], references: [id])
+  kind      ItemKind
+  name      String
+  unitPrice Decimal    @db.Decimal(12, 2)
+  total     Decimal    @db.Decimal(12, 2)
+  status    ItemStatus @default(PENDING)
+  paymentId String?
+  nodeId    String?
+  createdAt DateTime   @default(now())
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentKind {
+  INITIAL
+  OFFER
+}
+
+model Payment {
+  id                String          @id @default(cuid())
+  orderId           String
+  order             Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider          GatewayProvider
+  kind              PaymentKind     @default(INITIAL)
+  status            PaymentStatus   @default(PENDING)
+  amount            Decimal         @db.Decimal(12, 2)
+  currency          String
+  chargedAmount     Decimal?        @db.Decimal(12, 2)
+  chargedCurrency   String?
+  providerPaymentId String?
+  providerRef       String?
+  customerRef       String?
+  paymentMethodRef  String?
+  failureReason     String?
+  raw               Json?
+  approvedAt        DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([provider, providerPaymentId])
+  @@index([provider, providerRef])
+}
+
+model AccessGrant {
+  id          String    @id @default(cuid())
+  orderId     String
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItemId String?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  downloads   Download[]
+
+  @@unique([orderId, productId])
+}
+
+model Download {
+  id           String      @id @default(cuid())
+  grantId      String
+  grant        AccessGrant @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  fileId       String
+  file         ProductFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  token        String      @unique
+  count        Int         @default(0)
+  maxDownloads Int?
+  expiresAt    DateTime?
+  lastAt       DateTime?
+  createdAt    DateTime    @default(now())
+}
+
+model BuyerLoginToken {
+  id        String    @id @default(cuid())
+  storeId   String
+  store     Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  email     String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model LessonProgress {
+  id          String       @id @default(cuid())
+  customerId  String
+  customer    Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      CourseLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completedAt DateTime     @default(now())
+
+  @@unique([customerId, lessonId])
+}
+
+// ───────────────────────── Analítica ─────────────────────────
+
+enum EventType {
+  PAGE_VIEW
+  PRODUCT_VIEW
+  CHECKOUT_VIEW
+  CHECKOUT_STARTED
+  PAYMENT_INITIATED
+  PURCHASE
+}
+
+model AnalyticsEvent {
+  id          String    @id @default(cuid())
+  storeId     String
+  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  type        EventType
+  visitorId   String
+  productId   String?
+  checkoutId  String?
+  orderId     String?
+  value       Decimal?  @db.Decimal(12, 2)
+  currency    String?
+  path        String?
+  referrer    String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmContent  String?
+  utmTerm     String?
+  country     String?
+  device      String?
+  abVariant   String?
+  createdAt   DateTime  @default(now())
+
+  @@index([storeId, createdAt])
+  @@index([storeId, type, createdAt])
+}

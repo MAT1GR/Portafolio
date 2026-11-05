@@ -1,0 +1,61 @@
+{
+  "name": "vendora",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vendora: plataforma para vender productos digitales con tienda con IA, checkout, embudos post-compra, entrega automática y métricas.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset --force",
+    "worker": "tsx scripts/worker.ts",
+    "test": "vitest run",
+    "e2e": "node scripts/e2e.mjs",
+    "vapid": "tsx scripts/vapid.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.5.0",
+    "@aws-sdk/client-s3": "3.1162.0",
+    "@aws-sdk/s3-request-presigner": "3.1162.0",
+    "@fontsource-variable/bricolage-grotesque": "5.3.0",
+    "@fontsource-variable/inter": "5.3.0",
+    "@prisma/client": "6.19.3",
+    "@resvg/resvg-js": "2.6.2",
+    "@stripe/react-stripe-js": "3.11.0",
+    "@stripe/stripe-js": "7.10.0",
+    "bcryptjs": "3.0.3",
+    "dejavu-fonts-ttf": "2.37.3",
+    "jose": "6.2.15",
+    "lucide-react": "0.577.0",
+    "next": "15.5.29",
+    "nodemailer": "6.10.1",
+    "pdfkit": "0.17.2",
+    "react": "19.2.9",
+    "react-dom": "19.2.9",
+    "standardwebhooks": "1.0.0",
+    "stripe": "18.5.0",
+    "web-push": "3.6.7",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.4",
+    "@types/node": "22.20.5",
+    "@types/nodemailer": "6.4.24",
+    "@types/pdfkit": "0.17.7",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@types/web-push": "3.6.4",
+    "prisma": "6.19.3",
+    "tailwindcss": "4.3.4",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}
